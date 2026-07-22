@@ -330,7 +330,7 @@ class SortiesController extends Controller
             ->toArray();
 
         if (!in_array($validated['type'], array_keys($types)) || !in_array($validated['type'], $entreesPlaque)) {
-            return back()->withErrors(['type' => 'Le type sélectionné n’est pas valide pour cette plaque.']);
+            return back()->withErrors(['type' => 'Le type sélectionné n’est pwas valide pour cette plaque.']);
         }
 
         $entree = Entres::where('plaque', $validated['plaque'])
