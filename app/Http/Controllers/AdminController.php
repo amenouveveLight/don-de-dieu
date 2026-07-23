@@ -12,7 +12,7 @@ class UserController extends Controller
     public function __construct()
     {
         // Empêche les non-admins d’accéder au contrôleur
-        $this->middleware('admin');
+        $this->middleware('is_admin');
     }
 
     /**
