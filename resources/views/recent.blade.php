@@ -143,50 +143,64 @@
         const emptyRow = document.getElementById('empty-row');
 
         // 1. Récupération des données offline (Dexie)
-        const entreesOffline = await db.entrees.where('synced', 0).toArray();
-        const sortiesOffline = await db.sorties.where('synced', 0).toArray();
+        // On inclut synced=0 (en attente) ET synced=-1 (conflit détecté à corriger)
+        const entreesOffline = await db.entrees.where('synced').anyOf([0, -1]).toArray();
+        const sortiesOffline = await db.sorties.where('synced').anyOf([0, -1]).toArray();
         const allOffline = [...entreesOffline, ...sortiesOffline].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
         if (allOffline.length > 0) {
-            // Affichage du bouton de synchro
-            syncBtn.classList.remove('hidden');
-            offlineCount.innerText = allOffline.length;
-            if(emptyRow) emptyRow.classList.add('hidden');
+            // Affichage du bouton de synchro (seulement pour les vraies "en attente", pas les conflits déjà signalés)
+            const pendingCount = allOffline.filter(item => item.synced === 0).length;
+            if (pendingCount > 0) {
+                syncBtn.classList.remove('hidden');
+                offlineCount.innerText = pendingCount;
+            }
+            if (emptyRow) emptyRow.classList.add('hidden');
 
             // 2. Injection des lignes offline dans le tableau
             allOffline.forEach(item => {
                 const isSortie = item.montant !== undefined;
+                const isConflict = item.synced === -1;
                 const row = document.createElement('tr');
-                row.className = "bg-orange-50 hover:bg-orange-100 transition-colors border-l-4 border-orange-500";
-                
+                row.className = isConflict
+                    ? "bg-red-50 hover:bg-red-100 transition-colors border-l-4 border-red-500"
+                    : "bg-orange-50 hover:bg-orange-100 transition-colors border-l-4 border-orange-500";
+
                 const dateObj = new Date(item.created_at);
                 const dateStr = dateObj.toLocaleDateString('fr-FR');
                 const timeStr = dateObj.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
+                const textColor = isConflict ? 'text-red-900' : 'text-orange-900';
+                const badgeClass = isConflict ? 'bg-red-200 text-red-800' : 'bg-orange-200 text-orange-800';
+                const badgeLabel = isConflict ? '⚠️ Conflit' : '📴 Local';
+                const actionLabel = isConflict
+                    ? '<span class="text-red-600 font-bold italic">À vérifier</span>'
+                    : '<span class="text-orange-400 italic">En attente...</span>';
+
                 row.innerHTML = `
                     <td class="px-4 py-4 whitespace-nowrap">
-                        <div class="text-xs font-bold text-orange-900">${dateStr} ${timeStr}</div>
-                        <div class="text-[10px] text-orange-500 uppercase font-bold">${isSortie ? 'Sortie' : 'Entrée'}</div>
+                        <div class="text-xs font-bold ${textColor}">${dateStr} ${timeStr}</div>
+                        <div class="text-[10px] ${isConflict ? 'text-red-500' : 'text-orange-500'} uppercase font-bold">${isSortie ? 'Sortie' : 'Entrée'}</div>
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap">
                         <div class="flex items-center">
-                            <div class="text-sm font-extrabold text-orange-700 bg-orange-100 px-2 py-1 rounded border border-orange-200 uppercase">${item.plaque}</div>
-                            <span class="ml-2 text-[10px] text-orange-400 italic">(${item.type})</span>
+                            <div class="text-sm font-extrabold ${isConflict ? 'text-red-700 bg-red-100 border-red-200' : 'text-orange-700 bg-orange-100 border-orange-200'} px-2 py-1 rounded border uppercase">${item.plaque}</div>
+                            <span class="ml-2 text-[10px] ${isConflict ? 'text-red-400' : 'text-orange-400'} italic">(${item.type})</span>
                         </div>
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap">
-                        <div class="text-xs text-orange-700 font-medium">${item.name || item.owner_name || 'Inconnu'}</div>
+                        <div class="text-xs ${isConflict ? 'text-red-700' : 'text-orange-700'} font-medium">${item.name || item.owner_name || 'Inconnu'}</div>
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap text-center">
-                        <div class="text-xs font-bold text-orange-600">${isSortie ? item.montant + ' F' : '--'}</div>
+                        <div class="text-xs font-bold ${isConflict ? 'text-red-600' : 'text-orange-600'}">${isSortie ? item.montant + ' F' : '--'}</div>
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap text-center">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-200 text-orange-800 uppercase shadow-sm">
-                            📴 Local
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${badgeClass} uppercase shadow-sm">
+                            ${badgeLabel}
                         </span>
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap text-right text-xs">
-                        <span class="text-orange-400 italic">En attente...</span>
+                        ${actionLabel}
                     </td>
                 `;
                 tableBody.prepend(row);

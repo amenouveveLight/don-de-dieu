@@ -7,10 +7,15 @@
 
 <div class="pt-28 md:pt-28 w-full bg-gray-50 min-h-screen">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        
+
+        <!-- Bandeau hors-ligne -->
+        <div id="offline-notice" class="hidden mb-4 p-4 bg-orange-50 border-l-4 border-orange-500 text-orange-700 rounded-r-lg shadow-sm">
+            <span class="font-bold">📴 Mode hors-ligne : recherche et validation se font depuis les données locales.</span>
+        </div>
+
         <!-- Carte principale (Style Dashboard) -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden relative z-10">
-            
+
             <!-- En-tête de la carte -->
             <div class="bg-white border-b border-gray-100 p-5 sm:p-6">
                 <div class="flex items-center justify-center sm:justify-start space-x-3">
@@ -27,7 +32,7 @@
             </div>
 
             <div class="p-5 sm:p-8">
-                
+
                 <!-- Messages Flash Stylisés -->
                 @if(session('success'))
                     <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-lg shadow-sm flex items-center">
@@ -53,17 +58,17 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
-                            <input type="text" name="plaque" id="plaque" 
+                            <input type="text" name="plaque" id="plaque"
                                    placeholder="Ex: TG-1234-AB"
                                    value="{{ old('plaque', $plaque ?? '') }}"
-                                   onchange="this.form.submit()"
+                                   onchange="handlePlaqueChange(this)"
                                    required
                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500 focus:border-green-500 font-bold uppercase text-gray-800">
                         </div>
                         <button type="submit" class="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition-all">
                             VÉRIFIER
                         </button>
-                        
+
                         <!-- BOUTON SCANNER -->
                         <button type="button" onclick="startScanner()" class="bg-blue-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
@@ -83,7 +88,7 @@
                     </div>
                     <div id="reader" style="width: 100%; max-width: 500px; margin: 0 auto;"></div>
                 </div>
-                    
+
                 @if(session('success'))
                     <div class="p-4 mb-4 bg-green-100 text-green-700 rounded-lg">
                         {{ session('success') }} (Impression en cours...)
@@ -92,14 +97,13 @@
 
                 <hr class="mb-8 border-gray-100">
 
+                <!-- ============ FORMULAIRE DE SORTIE EN LIGNE (rendu serveur) ============ -->
                 @if(!empty($typesDisponibles))
-                    <!-- Formulaire de sortie -->
                     <form method="POST" action="{{ route('sorties.store') }}" class="space-y-6">
                         @csrf
                         <input type="hidden" name="plaque" value="{{ old('plaque', $plaque ?? '') }}">
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Type de véhicule -->
                             <div>
                                 <label for="type" class="block text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Type détecté</label>
                                 <select name="type" id="type" required onchange="updateMontant()"
@@ -115,7 +119,6 @@
                                 </select>
                             </div>
 
-                            <!-- Montant -->
                             <div>
                                 <label for="montant" class="block text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Montant à percevoir</label>
                                 <div class="relative">
@@ -127,7 +130,6 @@
                                 </div>
                             </div>
 
-                            <!-- Méthode de paiement -->
                             <div>
                                 <label for="paiement" class="block text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Mode de paiement</label>
                                 <select name="paiement" id="paiement" required
@@ -139,7 +141,6 @@
                                 </select>
                             </div>
 
-                            <!-- Paiement effectué -->
                             <div class="flex items-end pb-1">
                                 <label class="relative inline-flex items-center cursor-pointer p-3 border border-gray-200 rounded-lg w-full bg-gray-50 hover:bg-gray-100 transition-all">
                                     <input type="checkbox" name="paiement_ok" id="paiement_ok" class="sr-only peer" {{ old('paiement_ok') ? 'checked' : '' }}>
@@ -149,7 +150,6 @@
                             </div>
                         </div>
 
-                        <!-- Bouton de validation -->
                         <div class="pt-4">
                             <button type="submit"
                                     class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg shadow-md transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center space-x-2">
@@ -162,7 +162,6 @@
                     </form>
 
                 @elseif(isset($plaque))
-                    <!-- Message si aucune sortie trouvée -->
                     <div class="mt-6 p-6 bg-red-50 rounded-xl border border-red-100 flex items-center space-x-4">
                         <div class="bg-red-200 p-2 rounded-full">
                             <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,6 +175,62 @@
                     </div>
                 @endif
 
+                <!-- ============ FORMULAIRE DE SORTIE HORS-LIGNE (100% JS, caché par défaut) ============ -->
+                <div id="offline-sortie-form" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Type détecté</label>
+                            <select id="offline-type" class="w-full px-4 py-3 border border-orange-300 rounded-lg bg-orange-50 focus:ring-2 focus:ring-orange-500 font-bold text-gray-800">
+                                <!-- rempli dynamiquement en JS -->
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Montant à percevoir</label>
+                            <div class="relative">
+                                <input type="text" id="offline-montant" value="—" readonly
+                                       class="w-full px-4 py-3 border border-gray-200 bg-gray-100 text-orange-700 font-extrabold text-lg rounded-lg cursor-not-allowed">
+                                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 font-bold text-sm">FCFA</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Mode de paiement</label>
+                            <select id="offline-paiement" class="w-full px-4 py-3 border border-orange-300 rounded-lg bg-white focus:ring-2 focus:ring-orange-500 font-bold text-gray-800">
+                                <option value="">-- Choisir --</option>
+                                <option value="cash">Espèces</option>
+                                <option value="card">Carte</option>
+                                <option value="app">Application</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-end pb-1">
+                            <label class="relative inline-flex items-center cursor-pointer p-3 border border-orange-200 rounded-lg w-full bg-orange-50 hover:bg-orange-100 transition-all">
+                                <input type="checkbox" id="offline-paiement_ok" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[14px] after:left-[14px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                                <span class="ml-14 text-sm font-bold text-gray-700 uppercase">Paiement reçu</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="button" onclick="validerSortieOffline()"
+                                class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-lg shadow-md transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center space-x-2">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>VALIDER LA SORTIE (HORS-LIGNE)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="offline-notfound" class="hidden mt-6 p-6 bg-red-50 rounded-xl border border-red-100">
+                    <p class="text-red-800 font-bold uppercase text-xs sm:text-sm">Véhicule introuvable dans les données locales</p>
+                    <p class="text-red-600 text-xs">Vérifiez la plaque, ou reconnectez-vous pour rafraîchir les données.</p>
+                </div>
+
             </div>
         </div>
 
@@ -185,16 +240,15 @@
     </div>
 </div>
 
-<!-- IFRAME INVISIBLE POUR L'IMPRESSION -->
+<!-- IFRAME INVISIBLE POUR L'IMPRESSION (mode en ligne) -->
 <iframe id="print_frame" name="print_frame" style="position:absolute; top:-9999px; left:-9999px; border:none;"></iframe>
 
 <script>
-    // GESTION DE L'IMPRESSION AUTOMATIQUE
+    // GESTION DE L'IMPRESSION AUTOMATIQUE (mode en ligne)
     @if(session('ticket_url'))
         window.onload = function() {
             const frame = document.getElementById('print_frame');
             frame.src = "{{ session('ticket_url') }}";
-            
             frame.onload = function() {
                 setTimeout(function() {
                     frame.contentWindow.focus();
@@ -205,50 +259,133 @@
     @endif
 
     // ==========================================
-    // SCRIPT DU SCANNER DE QR CODE
+    // GESTION HORS-LIGNE DE LA RECHERCHE DE PLAQUE
+    // ==========================================
+
+    let entreeSelectionnee = null; // stocke l'entrée trouvée localement
+
+    async function handlePlaqueChange(input) {
+        if (navigator.onLine) {
+            // En ligne : comportement d'origine, on soumet le formulaire GET classique
+            input.form.submit();
+            return;
+        }
+
+        const plaqueSaisie = input.value.trim().toUpperCase();
+        document.getElementById('offline-sortie-form').classList.add('hidden');
+        document.getElementById('offline-notfound').classList.add('hidden');
+        if (!plaqueSaisie) return;
+
+        // Cherche toutes les entrées locales pour cette plaque
+        const entrees = await db.entrees.where('plaque').equalsIgnoreCase(plaqueSaisie).toArray();
+        const sorties = await db.sorties.where('plaque').equalsIgnoreCase(plaqueSaisie).toArray();
+
+        // Détermine les types encore "présents" (pas de sortie postérieure à l'entrée)
+        const typesDisponibles = [];
+        const dernieresEntreesParType = {};
+
+        entrees.forEach(e => {
+            if (!dernieresEntreesParType[e.type] || new Date(e.created_at) > new Date(dernieresEntreesParType[e.type].created_at)) {
+                dernieresEntreesParType[e.type] = e;
+            }
+        });
+
+        for (const type in dernieresEntreesParType) {
+            const entree = dernieresEntreesParType[type];
+            const aUneSortie = sorties.some(s => s.type === type && new Date(s.created_at) >= new Date(entree.created_at));
+            if (!aUneSortie) {
+                typesDisponibles.push({ type, entree });
+            }
+        }
+
+        if (typesDisponibles.length === 0) {
+            document.getElementById('offline-notfound').classList.remove('hidden');
+            entreeSelectionnee = null;
+            return;
+        }
+
+        // Remplit le select des types disponibles
+        const typeLabels = {
+            motorcycle: 'Moto', car: 'Voiture', tricycle: 'Tricycle',
+            nyonyovi: 'Nyonyovi', minibus: 'Minibus', bus: 'Bus', truck: 'Camion',
+        };
+        const selectType = document.getElementById('offline-type');
+        selectType.innerHTML = typesDisponibles.map(t =>
+            `<option value="${t.type}">${typeLabels[t.type] || t.type}</option>`
+        ).join('');
+
+        // Sélectionne la première entrée par défaut et calcule le montant
+        entreeSelectionnee = typesDisponibles[0].entree;
+        await updateMontantOffline();
+
+        selectType.onchange = async function() {
+            entreeSelectionnee = dernieresEntreesParType[this.value];
+            await updateMontantOffline();
+        };
+
+        document.getElementById('offline-sortie-form').classList.remove('hidden');
+    }
+
+    async function updateMontantOffline() {
+        if (!entreeSelectionnee) return;
+        const tarifObj = await db.tarifs.get(entreeSelectionnee.type.toLowerCase());
+        const prixJournalier = tarifObj ? tarifObj.tarif : 0;
+
+        const dateEntree = new Date(entreeSelectionnee.created_at);
+        const diffDays = Math.ceil(Math.abs(new Date() - dateEntree) / (1000 * 60 * 60 * 24)) || 1;
+        const montant = diffDays * prixJournalier;
+
+        document.getElementById('offline-montant').value = montant.toLocaleString() + ' (' + diffDays + ' j)';
+    }
+
+    async function validerSortieOffline() {
+        if (!entreeSelectionnee) {
+            alert("Aucun véhicule sélectionné.");
+            return;
+        }
+        const modePaiement = document.getElementById('offline-paiement').value;
+        if (!modePaiement) {
+            alert("Choisissez un mode de paiement.");
+            return;
+        }
+
+        await window.validerSortie(entreeSelectionnee, modePaiement);
+    }
+
+    // Affiche/masque le bandeau hors-ligne
+    function updateOfflineNotice() {
+        const notice = document.getElementById('offline-notice');
+        if (notice) notice.classList.toggle('hidden', navigator.onLine);
+    }
+    window.addEventListener('online', updateOfflineNotice);
+    window.addEventListener('offline', updateOfflineNotice);
+    document.addEventListener('DOMContentLoaded', updateOfflineNotice);
+
+    // ==========================================
+    // SCRIPT DU SCANNER DE QR CODE (inchangé)
     // ==========================================
     let html5QrcodeScanner = null;
 
     function startScanner() {
         document.getElementById('reader-container').classList.remove('hidden');
-        
-        // Initialiser le scanner sur l'élément 'reader'
         html5QrcodeScanner = new Html5Qrcode("reader");
-
-        // Configuration du scanner (caméra arrière par défaut)
         html5QrcodeScanner.start(
-            { facingMode: "environment" }, 
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 }
-            },
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
             (decodedText, decodedResult) => {
-                // Succès : Un QR Code a été scanné !
-                
-                // 1. Extraire la plaque avec une expression régulière
-                // On cherche "PLAQUE: " suivi de n'importe quel caractère jusqu'au saut de ligne
                 let match = decodedText.match(/PLAQUE:\s*([^\n]+)/i);
-                let plaqueDetectee = "";
-
-                if (match && match[1]) {
-                    plaqueDetectee = match[1].trim();
-                } else {
-                    // Si on ne trouve pas "PLAQUE:", on prend tout le texte par sécurité
-                    plaqueDetectee = decodedText.trim();
-                }
-
-                // 2. Remplir le champ "plaque"
-                document.getElementById('plaque').value = plaqueDetectee;
-
-                // 3. Arrêter la caméra proprement
+                let plaqueDetectee = match && match[1] ? match[1].trim() : decodedText.trim();
+                const plaqueInput = document.getElementById('plaque');
+                plaqueInput.value = plaqueDetectee;
                 stopScanner();
 
-                // 4. Soumettre le formulaire de recherche automatiquement
-                document.getElementById('search-form').submit();
+                if (navigator.onLine) {
+                    document.getElementById('search-form').submit();
+                } else {
+                    handlePlaqueChange(plaqueInput);
+                }
             },
-            (errorMessage) => {
-                // Ignore les erreurs de scan (c'est appelé à chaque frame où il n'y a pas de QR code)
-            }
+            (errorMessage) => {}
         ).catch((err) => {
             console.error("Erreur de lancement de la caméra", err);
             alert("Impossible d'accéder à la caméra. Vérifiez les permissions de votre navigateur.");
@@ -257,11 +394,9 @@
 
     function stopScanner() {
         if (html5QrcodeScanner) {
-            html5QrcodeScanner.stop().then((ignore) => {
+            html5QrcodeScanner.stop().then(() => {
                 document.getElementById('reader-container').classList.add('hidden');
-            }).catch((err) => {
-                console.error("Erreur à l'arrêt du scanner", err);
-            });
+            }).catch((err) => console.error("Erreur à l'arrêt du scanner", err));
         } else {
             document.getElementById('reader-container').classList.add('hidden');
         }

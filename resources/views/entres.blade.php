@@ -16,7 +16,11 @@
             </div>
 
             <div class="p-5 sm:p-8">
-                <!-- Alertes Success/Error ici ... -->
+                <!-- Indicateur hors-ligne -->
+                <div id="offline-notice" class="hidden mb-6 p-4 bg-orange-50 border-l-4 border-orange-500 text-orange-700 flex items-center">
+                    <span class="font-bold">📴 Vous êtes hors-ligne : l'entrée sera enregistrée localement et synchronisée plus tard.</span>
+                </div>
+
                 @if (session('success'))
                     <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 flex items-center">
                         <span class="font-bold">{{ session('success') }} (Impression en cours...)</span>
@@ -73,11 +77,28 @@
     </div>
 </div>
 
-<!-- IFRAME INVISIBLE POUR L'IMPRESSION -->
+<!-- IFRAME INVISIBLE POUR L'IMPRESSION (mode en ligne) -->
 <iframe id="print_frame" name="print_frame" style="position:absolute; top:-9999px; left:-9999px; border:none;"></iframe>
 
+<!-- TEMPLATE TICKET IMPRIMABLE (mode hors-ligne, utilisé par imprimerTicketEntree() dans app.js) -->
+<!-- ⚠️ Si ce bloc existe déjà dans layouts/app.blade.php, retire-le d'ici pour éviter un doublon d'ID -->
+<div id="ticket-entree-print" style="display:none;">
+    <div style="width: 280px; font-family: monospace; padding: 10px;">
+        <h3 style="text-align:center;">TICKET D'ENTRÉE</h3>
+        <p>N° : <span id="e-id"></span></p>
+        <p>Plaque : <span id="e-plaque"></span></p>
+        <p>Type : <span id="e-type"></span></p>
+        <p>Nom : <span id="e-name"></span></p>
+        <p>Tél : <span id="e-phone"></span></p>
+        <p>Date : <span id="e-date"></span></p>
+        <div style="text-align:center; margin-top:10px;">
+            <canvas id="e-qrcode"></canvas>
+        </div>
+    </div>
+</div>
+
 <script>
-    // GESTION DE L'IMPRESSION AUTOMATIQUE
+    // GESTION DE L'IMPRESSION AUTOMATIQUE (mode en ligne, réponse serveur classique)
     @if(session('ticket_url'))
         window.onload = function() {
             const frame = document.getElementById('print_frame');
@@ -87,10 +108,38 @@
                 setTimeout(function() {
                     frame.contentWindow.focus();
                     frame.contentWindow.print();
-                }, 500); // Petit délai pour s'assurer que le contenu est rendu
+                }, 500);
             };
         };
     @endif
+
+    // GESTION OFFLINE : interception du formulaire si pas de connexion
+    document.getElementById('entry-form').addEventListener('submit', async function(e) {
+        // En ligne : on laisse le formulaire suivre son cours normal (POST classique vers le serveur)
+        if (navigator.onLine) return;
+
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = {
+            plaque: form.plaque.value,
+            type: form.type.value,
+            name: form.name.value,
+            phone: form.phone.value,
+        };
+
+        await window.validerEntree(formData);
+        form.reset();
+    });
+
+    // Affiche/masque le bandeau "hors-ligne" selon l'état de connexion
+    function updateOfflineNotice() {
+        const notice = document.getElementById('offline-notice');
+        if (notice) notice.classList.toggle('hidden', navigator.onLine);
+    }
+    window.addEventListener('online', updateOfflineNotice);
+    window.addEventListener('offline', updateOfflineNotice);
+    document.addEventListener('DOMContentLoaded', updateOfflineNotice);
 
     // Logique AJAX Plaque (déjà présente dans votre code) ...
 </script>
