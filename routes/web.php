@@ -18,7 +18,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth','is_admin'])->group(function () {
   Route::get('/utilisateurs', [UserController::class, 'index'])->name('utilisateurs');
     Route::get('/utilisateurs.create', [UserController::class, 'create'])->name('utilisateurs.create');
     Route::post('/utilisateurs', [UserController::class, 'store'])->name('utilisateurs.store');

@@ -15,9 +15,17 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
    <body class="bg-green-600 text-white">
+            
         
             @include('layouts.navigation')
+            <span id="offline-badge"
+      style="display:none; background:#f97316; color:white; padding:2px 8px; border-radius:9999px; font-size:0.8rem; margin-left:8px;">
+</span>
 
+<span id="connection-status"
+      style="display:none; background:#ef4444; color:white; padding:2px 8px; border-radius:9999px; font-size:0.8rem; margin-left:8px;">
+    ⚠️ Hors ligne
+</span>
             <!-- Page Heading -->
             @if (isset($header))
                 <header class="bg-white dark:bg-gray-800 shadow">
