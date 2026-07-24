@@ -18,7 +18,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth Auth::user()->isAdmin()'])->group(function () {
+Route::middleware([' h::user()->isAdmin()'])->group(function () {
   Route::get('/utilisateurs', [UserController::class, 'index'])->name('utilisateurs');
     Route::get('/utilisateurs.create', [UserController::class, 'create'])->name('utilisateurs.create');
     Route::post('/utilisateurs', [UserController::class, 'store'])->name('utilisateurs.store');
