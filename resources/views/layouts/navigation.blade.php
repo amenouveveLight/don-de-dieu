@@ -153,9 +153,9 @@
                             <a href="{{ route('login') }}" class="w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 rounded-lg uppercase tracking-widest text-sm transition-colors">
                                 Connexion
                             </a>
-                            <a href="{{ route('register') }}" class="w-full text-center bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg uppercase tracking-widest text-sm shadow-md transition-all">
+                          <!--  <a href="{{ route('register') }}" class="w-full text-center bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg uppercase tracking-widest text-sm shadow-md transition-all">
                                 S'inscrire
-                            </a>
+                            </a> -->
                         </div>
                     @endguest
                 </div>
@@ -236,9 +236,9 @@
                     <a href="{{ route('login') }}" class="text-[11px] font-bold text-gray-500 hover:text-gray-800 uppercase tracking-widest transition-colors bg-white border border-gray-200 hover:bg-gray-50 px-4 py-2.5 rounded-lg shadow-sm">
                         Connexion
                     </a>
-                    <a href="{{ route('register') }}" class="text-[11px] font-bold text-white bg-green-600 hover:bg-green-700 uppercase tracking-widest transition-all px-5 py-2.5 rounded-lg shadow-md hover:-translate-y-0.5 active:scale-95">
+                   <!-- <a href="{{ route('register') }}" class="text-[11px] font-bold text-white bg-green-600 hover:bg-green-700 uppercase tracking-widest transition-all px-5 py-2.5 rounded-lg shadow-md hover:-translate-y-0.5 active:scale-95">
                         S'inscrire
-                    </a>
+                    </a> -->
                 @endguest
             </div>
 
