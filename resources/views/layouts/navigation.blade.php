@@ -236,7 +236,7 @@
                     <a href="{{ route('login') }}" class="text-[11px] font-bold text-gray-500 hover:text-gray-800 uppercase tracking-widest transition-colors bg-white border border-gray-200 hover:bg-gray-50 px-4 py-2.5 rounded-lg shadow-sm">
                         Connexion
                     </a>
-                   <!-- <a href="{{ route('register') }}" class="text-[11px] font-bold text-white bg-green-600 hover:bg-green-700 uppercase tracking-widest transition-all px-5 py-2.5 rounded-lg shadow-md hover:-translate-y-0.5 active:scale-95">
+                   <-- <a href="{{ route('register') }}" class="text-[11px] font-bold text-white bg-green-600 hover:bg-green-700 uppercase tracking-widest transition-all px-5 py-2.5 rounded-lg shadow-md hover:-translate-y-0.5 active:scale-95">
                         S'inscrire
                     </a> -->
                 @endguest
