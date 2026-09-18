@@ -24,7 +24,7 @@ export default defineConfig({
                 name: 'Parking Marché Pro',
                 short_name: 'Parking',
                 description: 'Gestion de parking hors-ligne pour les agents',
-                theme_color: '#3b82f6', // Le bleu par défaut de Tailwind/Laravel
+                theme_color: '#16a34a', // Le bleu par défaut de Tailwind/Laravel
                 background_color: '#ffffff',
                 display: 'standalone',
                 scope: '/',

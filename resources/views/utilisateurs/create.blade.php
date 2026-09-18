@@ -104,7 +104,7 @@
                             <select name="role" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 text-sm font-bold text-gray-700 cursor-pointer">
                                 <option value="" disabled selected>— Sélectionner un rôle —</option>
-                                <option value="admin">Administrateur</option>
+                               <!-- <option value="admin">Administrateur</option> -->
                                 <option value="agent">Agent</option>
                                 <option value="user">Gérant</option>
                             </select>
