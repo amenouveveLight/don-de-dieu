@@ -66,7 +66,6 @@ class SortiesController extends Controller
                 $end   = $now->copy()->endOfDay();
         }
 
-        // Base queries (Optimisation: pas de boucle pour les requêtes)
         $entresQuery  = Entres::whereBetween('created_at', [$start, $end]);
         $sortiesQuery = Sorties::whereBetween('created_at', [$start, $end]);
 
@@ -75,9 +74,8 @@ class SortiesController extends Controller
             $sortiesQuery->where('user_id', $user->id);
         }
 
-       $totalEntrees = (clone $entresQuery)->count();
+        $totalEntrees = (clone $entresQuery)->count();
 
-        // ⚡ OPTIMISATION : On groupe par type en UNE SEULE requête
         $entreesGrouped = (clone $entresQuery)
             ->select('type', DB::raw('COUNT(*) as total'))
             ->groupBy('type')
@@ -102,7 +100,6 @@ class SortiesController extends Controller
         $revenuMax = 0;
 
         foreach ($types as $type => $info) {
-            // Lecture depuis les résultats groupés (Ultra-rapide)
             $entrees = $entreesGrouped[$type] ?? 0;
             $sorties = $sortiesGrouped[$type]->total ?? 0;
             $revenu  = $sortiesGrouped[$type]->revenu ?? 0;
@@ -160,13 +157,11 @@ class SortiesController extends Controller
         $user = auth()->user();
         $date = $request->input('date', now()->format('Y-m-d'));
 
-        // Stats par période (Beaucoup plus rapide avec l'optimisation)
         $daily   = $this->genererStatistiques('jour', $date);
         $weekly  = $this->genererStatistiques('semaine', $date);
         $monthly = $this->genererStatistiques('mois', $date);
         $yearly  = $this->genererStatistiques('année', $date);
 
-        // Base queries
         $entresQuery  = Entres::query();
         $sortiesQuery = Sorties::query();
 
@@ -175,7 +170,6 @@ class SortiesController extends Controller
             $sortiesQuery->where('user_id', $user->id);
         }
 
-        // Présents actuels
         $oneHourAgo = now()->subHour();
 
         $currentEntrants = (clone $entresQuery)->count();
@@ -187,25 +181,21 @@ class SortiesController extends Controller
         $presentOneHourAgo = $entrantsBefore - $sortiesBefore;
 
         $diff = $currentPresent - $presentOneHourAgo;
-        $diffFormatted = $diff > 0 ? "+{$diff}" : (string) $diff; // (Corrigé : si >0, c'est un +, sinon c'est géré par le signe -)
+        $diffFormatted = $diff > 0 ? "+{$diff}" : (string) $diff;
 
-        // Capacité et occupation (Considération d'utiliser .env pour la capacité)
         $capaciteTotale = env('PARKING_CAPACITY', 500); 
-        $placesOccupées = max(0, $currentPresent); // Évite un chiffre négatif en cas d'erreur de base de données
+        $placesOccupées = max(0, $currentPresent);
         $tauxOccupation = $capaciteTotale > 0 ? round(($placesOccupées / $capaciteTotale) * 100, 1) : 0;
 
-        // Sorties par type + montant (agent ou global)
         $sortiesParType = (clone $sortiesQuery)
             ->select('type', DB::raw('COUNT(*) as total'), DB::raw('SUM(montant) as montant_total'))
             ->groupBy('type')
             ->get();
 
-        // Revenu du jour
         $revenuJour = (clone $sortiesQuery)
             ->whereDate('created_at', today())
             ->sum('montant');
 
-        // Top journée
         $topDailyEntry = (clone $entresQuery)
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as total'))
             ->groupBy(DB::raw('DATE(created_at)'))
@@ -259,7 +249,7 @@ class SortiesController extends Controller
             'places_occupees'    => $placesOccupées,
             'evolution_1h'       => $diffFormatted,
             'evolution_occupees_1h' => $diff,
-            'taux_occupation'    => min(100, $tauxOccupation), // Pour ne pas dépasser 100% visuellement
+            'taux_occupation'    => min(100, $tauxOccupation),
             'totalEngins'        => $currentEntrants,
             'revenuJour'         => $revenuJour,
             'sortiesParType'     => $sortiesParType,
@@ -298,7 +288,6 @@ class SortiesController extends Controller
                 if (!empty($typesDisponibles)) {
                     $dernierType = $typesDisponibles[0];
                     $dernierEntree = $entrees->where('type', $dernierType)->first();
-                    // Simplification avec Carbon :
                     $joursPasses = $dernierEntree->created_at->diffInDays(now()) + 1;
                     $montant = ($tarifs[$dernierType]['tarif'] ?? 0) * $joursPasses;
                 } else {
@@ -330,7 +319,7 @@ class SortiesController extends Controller
             ->toArray();
 
         if (!in_array($validated['type'], array_keys($types)) || !in_array($validated['type'], $entreesPlaque)) {
-            return back()->withErrors(['type' => 'Le type sélectionné n’est pwas valide pour cette plaque.']);
+            return back()->withErrors(['type' => 'Le type sélectionné n’est pas valide pour cette plaque.']);
         }
 
         $entree = Entres::where('plaque', $validated['plaque'])
@@ -351,7 +340,6 @@ class SortiesController extends Controller
             return back()->withErrors(['type' => 'La sortie pour ce type a déjà été enregistrée pour cette entrée.']);
         }
 
-        // Simplification Carbon
         $joursPasses = $entree->created_at->diffInDays(now()) + 1;
         $tarifJournalier = $tarifs[$validated['type']]['tarif'] ?? 0;
         $montantTotal = $joursPasses * $tarifJournalier;
@@ -366,44 +354,42 @@ class SortiesController extends Controller
             'paiement'    => $validated['paiement'],
             'paiement_ok' => $request->has('paiement_ok'),
         ]);
-                return redirect()->route('sorties.create')->with([
-        'success' => 'Sortie enregistrée avec succès !',
-        'ticket_url' => route('sorties.ticket.html', $sortie->id)
-    ]);// Assurez-vous que cette route existe
-        
+
+        return redirect()->route('sorties.create')->with([
+            'success'    => 'Sortie enregistrée avec succès !',
+            'ticket_url' => route('sorties.ticket.html', $sortie->uuid) // ✅ uuid
+        ]);
     }
 
-    
+    public function show($uuid)
+    {
+        // On charge la sortie ET l'agent qui a fait la sortie ('user')
+        $sortie = Sorties::with('user')->where('uuid', $uuid)->firstOrFail(); // ✅ uuid
 
-       public function show($id)
-      {
-                // On charge la sortie ET l'agent qui a fait la sortie ('user')
-                 $sortie = Sorties::with('user')->findOrFail($id);
+        // On cherche l'entrée correspondante (et l'agent qui a fait l'entrée)
+        $entree = Entres::with('user')   // ✅ "Entrees" n'existait pas
+            ->where('plaque', $sortie->plaque)
+            ->where('created_at', '<=', $sortie->created_at)
+            ->orderBy('created_at', 'desc')
+            ->first();
 
-         // On cherche l'entrée correspondante (et l'agent qui a fait l'entrée)
-                     $entree = Entrees::with('user')
-                     ->where('plaque', $sortie->plaque)
-                     ->where('created_at', '<=', $sortie->created_at)
-                     ->orderBy('created_at', 'desc')
-                     ->first();
+        $date_entree = $entree ? $entree->created_at : null;
+        $agent_entree = $entree ? $entree->user : null;
 
-                      $date_entree = $entree ? $entree->created_at : null;
-                       $agent_entree = $entree ? $entree->user : null; // On récupère l'agent d'entrée
-
-                      return view('sorties.show', compact('sortie', 'entree', 'agent_entree'));
-}
+        return view('sorties.show', compact('sortie', 'entree', 'agent_entree'));
+    }
 
     // 🔹 Formulaire édition
-    public function edit($id)
+    public function edit($uuid)
     {
-        $sortie = Sorties::findOrFail($id);
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
         return view('sorties.edit', compact('sortie'));
     }
 
     // 🔹 Mise à jour sortie
-    public function update(Request $request, $id)
+    public function update(Request $request, $uuid)
     {
-        $sortie = Sorties::findOrFail($id);
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
 
         $validated = $request->validate([
             'paiement'    => 'required|in:cash,card,app',
@@ -416,14 +402,14 @@ class SortiesController extends Controller
         ]);
 
         return redirect()
-            ->route('sorties.show', $sortie->id)
+            ->route('sorties.show', $sortie->uuid) // ✅ uuid
             ->with('success', 'Sortie mise à jour avec succès.');
     }
 
     // 🔹 Suppression sortie
-    public function destroy($id)
+    public function destroy($uuid)
     {
-        $sortie = Sorties::findOrFail($id);
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
         $sortie->delete();
 
         return redirect()->route('sorties.index')->with('success', 'Sortie supprimée avec succès.');      
@@ -514,26 +500,23 @@ class SortiesController extends Controller
         return $pdf->download("statistiques_année_{$year}.pdf");
     }
 
-    public function downloadTicket($id)
+    public function downloadTicket($uuid)
     {
-        $sortie = Sorties::findOrFail($id);
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
         $pdf = Pdf::loadView('ticket-sortie', compact('sortie'));
         return $pdf->stream('ticket.pdf');
     }
 
-  
-        
-public function ticketHtml($id)
+    public function ticketHtml($uuid)
     {
-        $sortie = Sorties::findOrFail($id);
-        
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
+
         // On récupère l'entrée correspondante pour avoir la date d'arrivée
         $entree = Entres::where('plaque', $sortie->plaque)
             ->where('created_at', '<=', $sortie->created_at)
             ->latest()
             ->first();
 
-        // Calcul du nombre de jours et gestion de la date d'entrée
         if ($entree) {
             $joursPasses = $entree->created_at->diffInDays(now()) + 1;
             $dateEntreeStr = $entree->created_at->format('d/m/Y H:i:s');
@@ -545,7 +528,7 @@ public function ticketHtml($id)
         $montantTotal = $sortie->montant;
 
         // 1. Préparer les données à mettre dans le QR Code
-        $qrData = "TICKET SORTIE/REÇU N°: " . $sortie->id . "\n";
+        $qrData = "TICKET SORTIE/REÇU N°: " . $sortie->uuid . "\n"; // ✅ uuid
         $qrData .= "PLAQUE: " . $sortie->plaque . "\n";
         $qrData .= "TYPE: " . strtoupper($sortie->type) . "\n";
         $qrData .= "CLIENT: " . ($sortie->owner_name ?? 'Inconnu') . "\n";
@@ -557,13 +540,11 @@ public function ticketHtml($id)
         $qrData .= "PAIEMENT: " . strtoupper($sortie->paiement);
 
         // 2. Générer le QR code au format SVG
-        // (Assurez-vous que "use SimpleSoftwareIO\QrCode\Facades\QrCode;" est bien importé en haut du fichier, mais ça doit l'être vu que ça marche pour les entrées)
         $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->generate($qrData);
 
         // 3. Retourner la vue
         return view('ticket-sortie', compact('sortie', 'entree', 'joursPasses', 'montantTotal', 'qrCode'));
     }
-    
 
     public function statsAgents(Request $request)
     {

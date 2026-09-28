@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Sorties extends Model
 {
@@ -30,5 +31,13 @@ class Sorties extends Model
         return $this->belongsTo(Entres::class, 'plaque', 'plaque')
                     ->where('created_at', '<', $this->created_at)
                     ->orderBy('created_at', 'desc');
+    }
+
+    protected static function booted()
+    {
+      static::creating(function ($model) {
+        // Si le téléphone (synchro offline) envoie déjà un uuid, on le garde
+        $model->uuid = $model->uuid ?: (string) Str::uuid();
+      });
     }
 }

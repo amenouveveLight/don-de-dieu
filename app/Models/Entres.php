@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Entres extends Model
 {
@@ -36,4 +37,15 @@ class Entres extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+    // store()
+    
+
+   protected static function booted()
+   {
+    static::creating(function ($model) {
+        // Si le téléphone (synchro offline) envoie déjà un uuid, on le garde
+        $model->uuid = $model->uuid ?: (string) Str::uuid();
+    });
+   }
+
 }

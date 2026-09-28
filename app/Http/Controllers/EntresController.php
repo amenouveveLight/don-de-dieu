@@ -77,30 +77,28 @@ class EntresController extends Controller
 
         return redirect()->route('entres.create')->with([
             'success' => 'Entrée enregistrée !',
-            'ticket_url' => route('entres.ticket.html', $entree->id) // Assurez-vous que cette route existe
+            'ticket_url' => route('entres.ticket.html', $entree->uuid) // ✅ uuid
         ]);
     }
 
     // 🔹 Affichage détail entrée
-       public function show($id)
-
+    public function show($uuid)
     {
         // On charge l'entrée avec l'utilisateur (l'agent) qui l'a créée
-        $entree = Entres::with('user')->findOrFail($id);
+        $entree = Entres::with('user')->where('uuid', $uuid)->firstOrFail();
 
         // On vérifie si le véhicule est déjà sorti (Nécessaire pour la vue !)
         $hasSortie = Sorties::where('plaque', $entree->plaque)
                             ->where('created_at', '>=', $entree->created_at)
                             ->exists();
 
-          dd($entree->user_id, $entree->user);
         return view('entres.show', compact('entree', 'hasSortie'));
     }
 
     // 🔹 Formulaire édition
-    public function edit($id)
+    public function edit($uuid)
     {
-        $entree = Entres::findOrFail($id);
+        $entree = Entres::where('uuid', $uuid)->firstOrFail();
 
         $hasSortie = Sorties::where('plaque', $entree->plaque)
                             ->where('created_at', '>', $entree->created_at)
@@ -115,9 +113,9 @@ class EntresController extends Controller
     }
 
     // 🔹 Mise à jour entrée
-    public function update(Request $request, $id)
+    public function update(Request $request, $uuid)
     {
-        $entree = Entres::findOrFail($id);
+        $entree = Entres::where('uuid', $uuid)->firstOrFail();
 
         $validated = $request->validate([
             'plaque' => 'required|string|max:255',
@@ -128,17 +126,16 @@ class EntresController extends Controller
 
         $entree->update($validated);
 
-        // ✅ Correction ici : c'est back(), pas redirectback()
         return back()->with([
             'success' => 'Entrée modifiée avec succès !',
-            'ticket_url' => route('entres.ticket.html', $entree->id)
+            'ticket_url' => route('entres.ticket.html', $entree->uuid),
         ]);
     }
 
     // 🔹 Suppression entrée
-    public function destroy($id)
+    public function destroy($uuid)
     {
-        $entree = Entres::findOrFail($id);
+        $entree = Entres::where('uuid', $uuid)->firstOrFail();
 
         // Vérifier si une sortie existe pour cette entrée
         $hasSortie = Sorties::where('plaque', $entree->plaque)
@@ -157,14 +154,13 @@ class EntresController extends Controller
     }
 
     // 🔹 Affichage du ticket
-    // 🔹 Affichage du ticket
-    public function ticketHtml($id)
+    public function ticketHtml($uuid)
     {
-        // On récupère l'entrée par son ID
-        $entree = Entres::findOrFail($id);
+        // On récupère l'entrée par son UUID
+        $entree = Entres::where('uuid', $uuid)->firstOrFail(); // ✅ corrigé
 
         // 1. Préparer les données à mettre dans le QR Code (Format texte lisible ou JSON)
-        $qrData = "TICKET N°: " . $entree->id . "\n";
+        $qrData = "TICKET N°: " . $entree->uuid . "\n";
         $qrData .= "PLAQUE: " . $entree->plaque . "\n";
         $qrData .= "TYPE: " . strtoupper($entree->type) . "\n";
         $qrData .= "NOM: " . $entree->name . "\n";
@@ -177,5 +173,4 @@ class EntresController extends Controller
         // 3. On retourne la vue avec l'entrée ET le QR Code
         return view('ticket-entree', compact('entree', 'qrCode'));
     }
-    }
-
+}
