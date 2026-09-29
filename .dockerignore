@@ -1,5 +1,7 @@
-/vendor
-/node_modules
-/.git
-/.env
-/storage/*.key
+.git
+.env
+.env.*
+vendor
+node_modules
+storage/logs/*.log
+bootstrap/cache/*.php

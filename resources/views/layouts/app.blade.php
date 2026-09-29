@@ -34,6 +34,13 @@
                     </div>
                 </header>
             @endif
+          @auth
+               @if(auth()->user()->role === 'admin')
+               <a href="{{ route('audit.complet') }}">Journal d'audit complet</a>
+                @elseif(auth()->user()->role === 'gerant')
+               <a href="{{ route('audit.index') }}">Journal d'audit</a>
+             @endif
+          @endauth
 
             <!-- Page Content -->
             <main>

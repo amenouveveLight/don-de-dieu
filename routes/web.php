@@ -7,6 +7,8 @@ use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TarifController;
+use App\Http\Controllers\AuditController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -25,6 +27,7 @@ Route::middleware(['auth','admin'])->group(function () {
     Route::get('/utilisateurs/{id}/edit', [UserController::class, 'edit'])->name('utilisateurs.edit');
     Route::put('/utilisateurs/{id}', [UserController::class, 'update'])->name('utilisateurs.update');
     Route::delete('/utilisateurs/{id}', [UserController::class, 'destroy'])->name('utilisateurs.destroy');
+    Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
 
     // Tarif update sans vue dédiée : on reste sur utilisateurs
     Route::get('/tarifs', [TarifController::class, 'index'])->name('tarifs');
@@ -50,6 +53,8 @@ Route::get('/sorties/ticket/{id}', [SortiesController::class, 'ticket'])->name('
 Route::get('/sorties/ticket/download/{id}', [SortiesController::class, 'downloadTicket'])->name('ticket.download');
 
 
+
+
 Route::get('/vehicule/info', [App\Http\Controllers\EntresController::class, 'getVehiculeInfo'])->name('vehicule.info');
 
 Route::get('/export/jour', [SortiesController::class, 'exportJour'])->name('export.jour');
@@ -68,6 +73,9 @@ Route::get('/statsagent', [SortiesController::class, 'statsAgents'])->name('stat
 // Activités récentes (accessible sans auth si besoin)
 Route::middleware('auth')->group(function () {
 Route::get('/recent', [ActivityController::class, 'activites'])->name('recent');
+Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+Route::get('/audit/complet', [AuditController::class, 'complet'])->name('audit.complet');
+Route::get('/audit/history/{uuid}', [AuditController::class, 'history'])->name('audit.history');
 
 });
 // Entrées véhicules (auth requis);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tarif;
 use App\Models\User;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -12,9 +13,8 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::query();
-         
 
-        // 🔍 Recherche par nom, prénom ou email
+        //  Recherche par nom, prénom ou email
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('firstname', 'like', "%{$request->search}%")
@@ -23,26 +23,39 @@ class UserController extends Controller
             });
         }
 
-        // 🎯 Filtre par rôle (admin / agent)
+        //  Filtre par rôle (admin / agent)
         if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
 
         $users = $query->orderBy('updated_at', 'desc')->paginate(10);
 
+        //  Statut de connexion basé sur le dernier login/logout du journal
+       $lastEvents = AuditLog::select('user_id', 'action', 'created_at')
+    ->whereIn('user_id', $users->pluck('id'))
+    ->whereIn('action', ['login', 'logout'])
+    ->orderByDesc('created_at')
+    ->get()
+    ->groupBy('user_id')
+    ->map(fn ($logs) => $logs->first());
 
-        // ✏️ Edition utilisateur (si edit_id dans l'URL)
+        foreach ($users as $user) {
+            $last = $lastEvents[$user->id] ?? null;
+            $user->is_online  = $last && $last->action === 'login';
+            $user->last_event = $last?->created_at;
+        }
+
+        //  Edition utilisateur (si edit_id dans l'URL)
         $editUser = $request->filled('edit_id')
             ? User::find($request->edit_id)
             : null;
 
-       
-
         return view('utilisateurs.index', compact('users', 'editUser'));
     }
+
     public function create()
     {
-        return view('utilisateurs.create'); // Formulaire d'entrée
+        return view('utilisateurs.create');
     }
 
     public function store(Request $request)
@@ -61,20 +74,17 @@ class UserController extends Controller
             'email'     => $request->email,
             'password'  => Hash::make($request->password),
             'role'      => $request->role,
-            'status'    => 1, // actif par défaut
+            'status'    => 1,
         ]);
 
         return redirect()->route('utilisateurs')->with('success', 'Utilisateur ajouté.');
     }
 
-
-   public function edit($id)
-{
-    $user = User::findOrFail($id);
-    return view('utilisateurs.edit', compact('user'));
-}
-
-
+    public function edit($id)
+    {
+        $user = User::findOrFail($id);
+        return view('utilisateurs.edit', compact('user'));
+    }
 
     public function update(Request $request, $id)
     {
@@ -85,8 +95,6 @@ class UserController extends Controller
             'lastname'  => 'required|string|max:255',
             'email'     => "required|email|unique:users,email,$id",
             'role'      => 'required|in:admin,agent,gerant',
-
-            
         ]);
 
         $user->update([
@@ -94,15 +102,11 @@ class UserController extends Controller
             'lastname'  => $request->lastname,
             'email'     => $request->email,
             'role'      => $request->role,
-           
         ]);
 
-        
-       return redirect()
-    ->route('utilisateurs.edit', $user->id)->with('success', 'Utilisateur mis à jour.');
- 
+        return redirect()
+            ->route('utilisateurs.edit', $user->id)->with('success', 'Utilisateur mis à jour.');
     }
-
 
     public function destroy($id)
     {

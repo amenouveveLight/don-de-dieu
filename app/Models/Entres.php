@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\Concerns\Auditable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Entres extends Model
 {
-    use HasFactory;
+      use HasFactory, SoftDeletes, Auditable;
 
     // Utiliser $guarded vide est préférable pour la synchronisation offline.
     // Cela permet au serveur d'accepter TOUS les champs envoyés par le téléphone,
@@ -33,10 +35,7 @@ class Entres extends Model
     /**
      * Relation avec l'agent
      */
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
+  
     // store()
     
 
@@ -48,4 +47,8 @@ class Entres extends Model
     });
    }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id')->withTrashed();
+    }
 }

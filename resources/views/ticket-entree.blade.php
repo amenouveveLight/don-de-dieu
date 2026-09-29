@@ -50,7 +50,7 @@
 
     <div class="info-line">
         <span>N° Ticket:</span>
-        <span class="text-bold">#{{ $entree->id }}</span>
+        <span class="text-bold">#{{ $entree->uuid }}</span>
     </div>
     <div class="info-line">
         <span>Plaque:</span>

@@ -57,7 +57,7 @@
 
     <div class="info-line">
         <span>Reçu N°:</span>
-        <span class="text-bold">#{{ $sortie->id }}</span>
+        <span class="text-bold">#{{ $sortie->uuid }}</span>
     </div>
     <div class="info-line">
         <span>Plaque:</span>

@@ -108,7 +108,7 @@
                                 <select id="role" name="role" required
                                     class="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 text-sm transition-colors bg-gray-50 focus:bg-white outline-none appearance-none">
                                     <option value="" disabled selected>Sélectionnez un rôle</option>
-                                <!--    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrateur</option> -->
+                                <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrateur</option> -->
                                     <option value="gerant" {{ old('role') == 'gerant' ? 'selected' : '' }}>Gérant</option>
                                     <option value="agent" {{ old('role') == 'agent' ? 'selected' : '' }}>Agent de parking</option>
                                 </select>

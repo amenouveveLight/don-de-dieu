@@ -124,6 +124,7 @@
                             <a href="{{ url('/recent') }}" class="text-xl font-bold text-gray-800 hover:text-green-600 uppercase tracking-widest">Activités</a>
                             <a href="{{ url('/tarifs') }}" class="text-xl font-bold text-gray-800 hover:text-green-600 uppercase tracking-widest">Tarifs</a>
                             <a href="{{ url('/dashboard') }}" class="text-xl font-bold text-gray-800 hover:text-green-600 uppercase tracking-widest">Rapports</a>
+                            <a href="{{ route('audit.index') }}" class="text-xl font-bold text-gray-800 hover:text-green-600 uppercase tracking-widest">Audit complet</a>
                         @endif
 
                         <!-- Rôle Admin -->
@@ -133,6 +134,7 @@
                             <a href="{{ url('/recent') }}" class="text-xl font-bold text-gray-800 hover:text-green-600 uppercase tracking-widest">Activités</a>
                             <a href="{{ url('/dashboard') }}" class="text-xl font-bold text-gray-800 hover:text-green-600 uppercase tracking-widest">Rapports</a>
                             <a href="{{ url('/statsagent') }}" class="text-xl font-bold text-gray-800 hover:text-green-600 uppercase tracking-widest">Stats Agent</a>
+                            <a href="{{ route('audit.complet') }}" class="text-xl font-bold text-gray-800 hover:text-green-600 uppercase tracking-widest">Audit complet</a>
                         @endif
 
                         <!-- Options de profil mobile -->
@@ -179,6 +181,8 @@
                         <a href="{{ url('/recent') }}" class="text-[11px] font-bold text-gray-500 hover:text-green-600 uppercase tracking-widest transition-colors py-2 border-b-2 border-transparent hover:border-green-600">Activités</a>
                         <a href="{{ url('/tarifs') }}" class="text-[11px] font-bold text-gray-500 hover:text-green-600 uppercase tracking-widest transition-colors py-2 border-b-2 border-transparent hover:border-green-600">Tarifs</a>
                         <a href="{{ url('/dashboard') }}" class="text-[11px] font-bold text-gray-500 hover:text-green-600 uppercase tracking-widest transition-colors py-2 border-b-2 border-transparent hover:border-green-600">Rapports</a>
+                        <a href="{{ route('audit.index') }}" class="text-[11px] font-bold text-gray-500 hover:text-green-600 uppercase tracking-widest transition-colors py-2 border-b-2 border-transparent hover:border-green-600">audit agent</a>
+                   
                     @endif
 
                     <!-- Admin -->
@@ -188,6 +192,8 @@
                         <a href="{{ url('/recent') }}" class="text-[11px] font-bold text-gray-500 hover:text-green-600 uppercase tracking-widest transition-colors py-2 border-b-2 border-transparent hover:border-green-600">Activités</a>
                         <a href="{{ url('/dashboard') }}" class="text-[11px] font-bold text-gray-500 hover:text-green-600 uppercase tracking-widest transition-colors py-2 border-b-2 border-transparent hover:border-green-600">Rapports</a>
                         <a href="{{ url('/statsagent') }}" class="text-[11px] font-bold text-gray-500 hover:text-green-600 uppercase tracking-widest transition-colors py-2 border-b-2 border-transparent hover:border-green-600">Stats Agent</a>
+                        <a href="{{ route('audit.complet') }}" class="text-[11px] font-bold text-gray-500 hover:text-green-600 uppercase tracking-widest transition-colors py-2 border-b-2 border-transparent hover:border-green-600">audit agent</a>
+                   
                     @endif
                 @endauth
             </div>

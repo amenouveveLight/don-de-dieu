@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\Concerns\Auditable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sorties extends Model
 {
-    use HasFactory;
-
+      use HasFactory, SoftDeletes, Auditable;
     // Utiliser $guarded vide pour la synchronisation.
     // Cela permet d'enregistrer le 'created_at' original du téléphone 
     // et le 'user_id' de l'agent sans blocage.
@@ -20,7 +21,7 @@ class Sorties extends Model
      */
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->withTrashed();
     }
 
     /**
