@@ -183,7 +183,7 @@ class SortiesController extends Controller
         $diff = $currentPresent - $presentOneHourAgo;
         $diffFormatted = $diff > 0 ? "+{$diff}" : (string) $diff;
 
-        $capaciteTotale = env('PARKING_CAPACITY', 500); 
+        $capaciteTotale = env('PARKING_CAPACITY', 1000); 
         $placesOccupées = max(0, $currentPresent);
         $tauxOccupation = $capaciteTotale > 0 ? round(($placesOccupées / $capaciteTotale) * 100, 1) : 0;
 
@@ -365,6 +365,7 @@ class SortiesController extends Controller
     {
         // On charge la sortie ET l'agent qui a fait la sortie ('user')
         $sortie = Sorties::with('user')->where('uuid', $uuid)->firstOrFail(); // ✅ uuid
+        $this->authorize('view', $sortie);
 
         // On cherche l'entrée correspondante (et l'agent qui a fait l'entrée)
         $entree = Entres::with('user')   // ✅ "Entrees" n'existait pas
@@ -382,14 +383,16 @@ class SortiesController extends Controller
     // 🔹 Formulaire édition
     public function edit($uuid)
     {
-        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail();
+        $this->authorize('update', $sortie); // ✅ uuid
         return view('sorties.edit', compact('sortie'));
     }
 
     // 🔹 Mise à jour sortie
     public function update(Request $request, $uuid)
     {
-        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail();
+        $this->authorize('update', $sortie); // ✅ uuid
 
         $validated = $request->validate([
             'paiement'    => 'required|in:cash,card,app',
@@ -409,10 +412,11 @@ class SortiesController extends Controller
     // 🔹 Suppression sortie
     public function destroy($uuid)
     {
-        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail();
+        $this->authorize('delete', $sortie); // ✅ uuid
         $sortie->delete();
 
-        return redirect()->route('sorties.index')->with('success', 'Sortie supprimée avec succès.');      
+        return redirect()->route('sorties.create')->with('success', 'Sortie supprimée avec succès.');      
     }
 
     public function exportJour(Request $request)
@@ -502,15 +506,24 @@ class SortiesController extends Controller
 
     public function downloadTicket($uuid)
     {
-        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
-        $pdf = Pdf::loadView('ticket-sortie', compact('sortie'));
-        return $pdf->stream('ticket.pdf');
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail();
+        $this->authorize('view', $sortie);
+
+        $pdf = Pdf::loadView('ticket-sortie', $this->ticketData($sortie));
+        return $pdf->stream('ticket-' . $sortie->uuid . '.pdf');
     }
 
     public function ticketHtml($uuid)
     {
-        $sortie = Sorties::where('uuid', $uuid)->firstOrFail(); // ✅ uuid
+        $sortie = Sorties::where('uuid', $uuid)->firstOrFail();
+        $this->authorize('view', $sortie);
 
+        return view('ticket-sortie', $this->ticketData($sortie));
+    }
+
+    // Données communes au ticket HTML et au ticket PDF
+    private function ticketData(Sorties $sortie): array
+    {
         // On récupère l'entrée correspondante pour avoir la date d'arrivée
         $entree = Entres::where('plaque', $sortie->plaque)
             ->where('created_at', '<=', $sortie->created_at)
@@ -542,8 +555,7 @@ class SortiesController extends Controller
         // 2. Générer le QR code au format SVG
         $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(150)->generate($qrData);
 
-        // 3. Retourner la vue
-        return view('ticket-sortie', compact('sortie', 'entree', 'joursPasses', 'montantTotal', 'qrCode'));
+        return compact('sortie', 'entree', 'joursPasses', 'montantTotal', 'qrCode');
     }
 
     public function statsAgents(Request $request)

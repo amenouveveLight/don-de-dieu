@@ -173,4 +173,23 @@ class EntresController extends Controller
         // 3. On retourne la vue avec l'entrée ET le QR Code
         return view('ticket-entree', compact('entree', 'qrCode'));
     }
+
+    public function checkPlaque(Request $request)
+{
+    $data = $request->validate([
+        'plaque' => 'required|string|max:255',
+        'type'   => 'nullable|string|max:50',
+    ]);
+
+    $last = Entres::where('plaque', $data['plaque'])
+        ->when($data['type'] ?? null, fn ($q, $t) => $q->where('type', $t))
+        ->latest()->first();
+
+    $exists = $last && !Sorties::where('plaque', $last->plaque)
+        ->where('type', $last->type)
+        ->where('created_at', '>=', $last->created_at)
+        ->exists();
+
+    return response()->json(['exists' => (bool) $exists]);
+}
 }
