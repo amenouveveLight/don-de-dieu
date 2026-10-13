@@ -357,18 +357,18 @@ class SortiesController extends Controller
 
         return redirect()->route('sorties.create')->with([
             'success'    => 'Sortie enregistrée avec succès !',
-            'ticket_url' => route('sorties.ticket.html', $sortie->uuid) // ✅ uuid
+            'ticket_url' => route('sorties.ticket.html', $sortie->uuid) //  uuid
         ]);
     }
 
     public function show($uuid)
     {
         // On charge la sortie ET l'agent qui a fait la sortie ('user')
-        $sortie = Sorties::with('user')->where('uuid', $uuid)->firstOrFail(); // ✅ uuid
+        $sortie = Sorties::with('user')->where('uuid', $uuid)->firstOrFail(); //  uuid
         $this->authorize('view', $sortie);
 
         // On cherche l'entrée correspondante (et l'agent qui a fait l'entrée)
-        $entree = Entres::with('user')   // ✅ "Entrees" n'existait pas
+        $entree = Entres::with('user')   //  "Entrees" n'existait pas
             ->where('plaque', $sortie->plaque)
             ->where('created_at', '<=', $sortie->created_at)
             ->orderBy('created_at', 'desc')

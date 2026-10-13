@@ -12,12 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('entres', function (Blueprint $table) {
-           $table->id();
-            $table->string('plaque');
-            $table->string('type');
-            $table->string('name');
-            $table->string('phone');
-            $table->timestamps();
+          
         });   
     }
 
